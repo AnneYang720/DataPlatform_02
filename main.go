@@ -45,6 +45,36 @@ func main() {
 		DB: session.DB("database02").C("exp_type"),
 	}
 
+	App.MyExpCaseModel = &App.ExpCaseModel{
+		DB: session.DB("database02").C("exp_case"),
+	}
+
+	App.MyExpDataModel = &App.ExpDataModel{
+		DB: session.DB("database02").C("exp_data"),
+	}
+
+	App.MyReactorModel = &App.ReactorModel{
+		DB: session.DB("database02").C("reactor_mod"),
+	}
+
+	App.MyWConditionModel = &App.WConditionModel{
+		DB: session.DB("database02").C("working_con"),
+	}
+
+	App.MyGridFS = session.DB("database02").GridFS("fs")
+
+	App.MySimCaseModel = &App.SimCaseModel{
+		DB: session.DB("database02").C("sim_case"),
+	}
+
+	App.MySimOutTypeModel = &App.SimOutTypeModel{
+		DB: session.DB("database02").C("sim_outtype"),
+	}
+
+	App.MySimDataModel = &App.SimDataModel{
+		DB: session.DB("database02").C("sim_data"),
+	}
+
 	//开启服务器
 	r := gin.Default()
 
@@ -60,9 +90,25 @@ func main() {
 	r.POST("/register", App.Register)
 	r.POST("/login", App.Login)
 
+	//增加工况、型号等
+	r.POST("/addreactormod", App.AddReactorModel)
+	r.POST("/addworkingcon", App.AddWorkingCon)
+
 	exp := r.Group("/exp")
 	{
-		exp.POST("/addexptype", App.AddExpType)
+		exp.POST("/addtype", App.AddExpType)
+		exp.POST("/addcase", App.AddExpCase)
+		exp.POST("/adddata", App.AddExpData)
+	}
+
+	sim := r.Group("/sim")
+	{
+		sim.POST("/uploadinput", App.UploadSingleInput)
+		sim.GET("/downloadfile/:id", App.DownloadFile)
+		sim.POST("/addcase", App.AddSimCase)
+		sim.POST("/addoutputtype", App.AddSimOutputType)
+		sim.GET("/adddata/:typeid/:caseid/:fileid", App.AddSimData)
+		// exp.POST("/addexpdata", App.AddExpData)
 	}
 
 	admin := r.Group("/admin")
@@ -70,55 +116,6 @@ func main() {
 	{
 		admin.GET("/info", App.GetUserInfo)
 	}
-
-	// article := r.Group("/article")
-	// {
-	// 	article.GET("/", App.GetPage)
-
-	// 	article.GET("/all", App.GetAllArticles)
-
-	// 	article.GET("/aid/:aid", App.GetArticleByAid)
-
-	// 	article.GET("/title/:title", App.GetArticlesByTitle)
-
-	// 	article.GET("/tag/:tag", App.GetArticlesByTag)
-
-	// 	article.GET("/publisher/:publisher", App.GetArticlesByPublisher)
-
-	// 	//article.Use(Authorize())
-
-	// 	article.POST("/publish", App.PublishArticle)
-
-	// 	article.DELETE("/:aid", App.DeleteArticleByAid)
-
-	// 	article.PUT("/:aid", App.ModifyArticleByAid)
-
-	// }
-
-	// comment := r.Group("/comment")
-	// {
-	// 	comment.GET("/id/:id", App.GetCommentsById)
-
-	// 	//comment.Use(Authorize())
-
-	// 	comment.POST("/publish", App.AddComment)
-
-	// 	comment.PUT("/:id", App.ModifyCommentByCid)
-
-	// 	comment.DELETE("/:id", App.DeleteCommentByCid)
-
-	// }
-
-	// like := r.Group("/like")
-	// {
-	// 	like.GET("/id/:id", App.GetLikesById)
-	// 	//like.Use(Authorize())
-
-	// 	like.POST("/likeit", App.LikeIt)
-
-	// 	like.DELETE("/:lid", App.UnlikeIt)
-
-	// }
 
 	r.Run(":9999")
 }
