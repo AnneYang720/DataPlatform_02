@@ -36,10 +36,10 @@ func Passjs() gin.HandlerFunc {
 
 		// gin设置响应头，设置跨域
 
-		c.Header("Access-Control-Allow-Origin", "*")
-		//c.Header("Access-Control-Allow-Credentials","true")
-		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		c.Header("Access-Control-Allow-Headers", "*")
+		// c.Header("Access-Control-Allow-Origin", "http://127.0.0.1:9000")
+		// c.Header("Access-Control-Allow-Credentials", "true")
+		// c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		// c.Header("Access-Control-Allow-Headers", "X-Requested-With, accept, content-type")
 		if c.Request.Method == "OPTIONS" {
 			// session := sessions.Default(c)
 			// session.Set("sessionid", 123456)       //change

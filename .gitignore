@@ -10,3 +10,23 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+.DS_Store
+front/node_modules/
+front/dist/
+front/npm-debug.log*
+front/yarn-debug.log*
+front/yarn-error.log*
+front/package-lock.json
+
+# Editor directories and files
+front/.idea
+front/.vscode
+front/*.suo
+front/*.ntvs*
+front/*.njsproj
+front/*.sln
+front/static/netron/
+front/static/*.tfevents*
+front/static/*.json
+front/static/*.dot
