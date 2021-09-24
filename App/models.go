@@ -24,6 +24,7 @@ type ApiResponse struct {
 	Code    int         `bson:"code"`
 	Flag    bool        `bson:"flag"`
 	Message interface{} `bson:"message"`
+	Data    interface{} `bson:"data"`
 }
 
 type ObjectID struct {
@@ -104,6 +105,7 @@ type ExpCase struct {
 	ExpName string        `bson:"expname"`
 	ModId   bson.ObjectId `bson:"modid"`
 	Time    time.Time     `bson:"time"`
+	User    bson.ObjectId `bson:"user"`
 }
 
 //未保存实验名称，没有Id等其他属性
@@ -112,6 +114,17 @@ type ExpCase_notSaved struct {
 	ExpName string        `bson:"expname"`
 	ModId   bson.ObjectId `bson:"modid"`
 	Time    time.Time     `bson:"time"`
+}
+
+//完整的实验名称属性
+type ExpCase_full struct {
+	Id       bson.ObjectId `bson:"_id"`
+	Type     bson.ObjectId `bson:"type"`
+	ExpName  string        `bson:"expname"`
+	ModId    bson.ObjectId `bson:"modid"`
+	Time     time.Time     `bson:"time"`
+	User     bson.ObjectId `bson:"user"`
+	TypeName string        `bson:"typename"`
 }
 
 // TODO map[string]interface
@@ -126,6 +139,13 @@ type ExpData_toSave struct {
 type ExpData_notSaved struct {
 	LabID bson.ObjectId `bson:"labid"`
 	Data  [][]float32   `bson:"data"`
+}
+
+//实验数据，没有Id等其他属性
+type ExpData struct {
+	Id    bson.ObjectId      `bson:"_id"`
+	LabID bson.ObjectId      `bson:"labid"`
+	Data  map[string]float32 `bson:"data"`
 }
 
 //完整的型号
@@ -147,7 +167,7 @@ type WorkingCon struct {
 	ConName string        `bson:"conname"`
 }
 
-//未保存工况，没有Id等其他属性
+//未保存工况，没有Id等其他属性f
 type WorkingCon_notSaved struct {
 	ConName string `bson:"conname"`
 }
@@ -161,17 +181,38 @@ type SimuInputs_notSaved struct {
 // TODO 确定寿期是谁的属性
 //完整的仿真实例属性
 type SimCase struct {
-	Id      bson.ObjectId   `bson:"_id"`
-	SimDate time.Time       `bson:"simtime"`
-	WConID  bson.ObjectId   `bson:"wconid"`
-	RModID  bson.ObjectId   `bson:"rmodid"`
-	Inputs  []bson.ObjectId `bson:"inputs"`
-	Outputs []bson.ObjectId `bson:"outputs"`
+	Id          bson.ObjectId   `bson:"_id"`
+	User        bson.ObjectId   `bson:"user"`
+	SimTime     time.Time       `bson:"simtime"`
+	SimName     string          `bson:"simname"`
+	WConID      bson.ObjectId   `bson:"wconid"`
+	RModID      bson.ObjectId   `bson:"rmodid"`
+	Inputs      []bson.ObjectId `bson:"inputs"`
+	InputsName  []string        `bson:"inputname"`
+	Outputs     []bson.ObjectId `bson:"outputs"`
+	OutputsName []string        `bson:"outputname"`
+}
+
+//用于返回列表的仿真实例属性
+type SimCase_Full struct {
+	Id          bson.ObjectId   `bson:"_id"`
+	SimTime     time.Time       `bson:"simtime"`
+	SimName     string          `bson:"simname"`
+	WConID      bson.ObjectId   `bson:"wconid"`
+	WConName    string          `bson:"wconname"`
+	RModID      bson.ObjectId   `bson:"rmodid"`
+	RModName    string          `bson:"rmodname"`
+	Inputs      []bson.ObjectId `bson:"inputs"`
+	InputsName  []string        `bson:"inputname"`
+	Outputs     []bson.ObjectId `bson:"outputs"`
+	OutputsName []string        `bson:"outputname"`
 }
 
 //未保存仿真实例，没有Id等其他属性
 type SimCase_notSaved struct {
+	User    bson.ObjectId   `bson:"user"`
 	SimTime time.Time       `bson:"simtime"`
+	SimName string          `bson:"simname"`
 	WConID  bson.ObjectId   `bson:"wconid"`
 	RModID  bson.ObjectId   `bson:"rmodid"`
 	Inputs  []bson.ObjectId `bson:"inputs"`
@@ -195,8 +236,10 @@ type SimOutputType_notSaved struct {
 
 //未保存仿真数据，没有Id等其他属性
 type SimData_toSaved struct {
-	SimCaseID bson.ObjectId          `bson:"simcaseid"`
-	Data      map[string]interface{} `bson:"data"`
+	SimCaseID       bson.ObjectId          `bson:"simcaseid"`
+	SimOutputID     bson.ObjectId          `bson:"simoutputid"`
+	SimOutputTypeID bson.ObjectId          `bson:"simoutputtypeid"`
+	Data            map[string]interface{} `bson:"data"`
 }
 
 // TODO map里面类型不一样

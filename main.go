@@ -90,26 +90,40 @@ func main() {
 	r.POST("/register", App.Register)
 	r.POST("/login", App.Login)
 
-	//增加工况、型号等
-	r.POST("/addreactormod", App.AddReactorModel)
-	r.POST("/addworkingcon", App.AddWorkingCon)
-
+	//实验
 	exp := r.Group("/exp")
+	exp.Use(middleware.Authorize())
 	{
 		exp.POST("/addtype", App.AddExpType)
 		exp.POST("/addcase", App.AddExpCase)
 		exp.POST("/adddata", App.AddExpData)
+		exp.GET("/getlist", App.GetExpList)
+		exp.GET("/getidlist", App.GetExpIdList)
+		exp.GET("/getdata/:expid", App.GetData)
+		exp.GET("/gettypelist", App.GetExpTypeList)
+		exp.POST("/createcase", App.AddExpCaseFromFile)
 	}
 
+	//仿真
 	sim := r.Group("/sim")
+	sim.Use(middleware.Authorize())
 	{
 		sim.POST("/uploadinput", App.UploadSingleInput)
 		sim.GET("/downloadfile/:id", App.DownloadFile)
 		sim.POST("/addcase", App.AddSimCase)
 		sim.POST("/addoutputtype", App.AddSimOutputType)
 		sim.GET("/adddata/:typeid/:caseid/:fileid", App.AddSimData)
+		sim.POST("/createcase", App.AddSimCaseFromFile)
+		sim.GET("/getlist", App.GetSimList)
+		sim.GET("/getidlist", App.GetSimIdList)
 		// exp.POST("/addexpdata", App.AddExpData)
 	}
+
+	//增加工况、型号等
+	r.POST("/addreactormod", App.AddReactorModel)
+	r.POST("/addworkingcon", App.AddWorkingCon)
+	r.GET("/getmodlist", App.GetModList)
+	r.GET("/getconlist", App.GetConList)
 
 	admin := r.Group("/admin")
 	admin.Use(middleware.Authorize())

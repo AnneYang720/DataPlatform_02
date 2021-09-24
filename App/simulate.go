@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -136,5 +137,162 @@ func AddSimData(c *gin.Context) {
 		Code:    200,
 		Flag:    true,
 		Message: "New simulation output data successfully added.",
+	})
+}
+
+func AddSimCaseFromFile(c *gin.Context) {
+	//解析post的数据
+	form, _ := c.MultipartForm()
+	inputfiles := form.File["sim_inputfile"]
+	outputfile := form.File["sim_outputfile"]
+	userId, _ := c.Get("G_userId")
+	simCon := c.PostForm("sim_con")
+	simMod := c.PostForm("sim_mod")
+	simName := c.PostForm("sim_name")
+
+	//新建simcase
+	simcase_id := bson.NewObjectId()
+
+	//存文件
+	inputfilesId := []bson.ObjectId{}
+	inputfilesName := []string{}
+	for _, file := range inputfiles {
+		//创建新的gridFile，并写入文件
+		input_id := bson.NewObjectId()
+		gridFile, _ := MyGridFS.Create(file.Filename)
+		gridFile.SetId(input_id)
+		fileContent, _ := file.Open()
+		defer fileContent.Close()
+		_, err := io.Copy(gridFile, fileContent)
+		err = gridFile.Close()
+		if err != nil {
+			panic(err)
+		}
+		//存下Id和文件名
+		inputfilesName = append(inputfilesName, file.Filename)
+		inputfilesId = append(inputfilesId, input_id)
+	}
+	outputfilesId := []bson.ObjectId{}
+	outputfilesName := []string{}
+	for _, file := range outputfile {
+		//创建新的gridFile，并写入文件
+		output_id := bson.NewObjectId()
+
+		//得知输出的类型
+		typeName := strings.Split(file.Filename, ".")[0]
+		tmpType := SimOutputType{}
+		MySimOutTypeModel.DB.Find(bson.M{"typename": typeName}).One(&tmpType)
+		typeId := fmt.Sprintf("%x", string(tmpType.Id))
+		if typeId == "" {
+			panic("输出类型不存在")
+		}
+
+		fmt.Printf("output name %v\n", file.Filename)
+		fmt.Printf("file type %v\n", tmpType.TypeName)
+
+		//存数据
+		fileContent, _ := file.Open()
+		csvLines, _ := csv.NewReader(fileContent).ReadAll()
+		for _, line := range csvLines[2:] {
+			// fmt.Printf("%v\n", line)
+			tmpData := SimData_toSaved{}
+			tmpData.Data = make(map[string]interface{})
+			tmpData.SimCaseID = simcase_id
+			tmpData.SimOutputID = output_id
+			tmpData.SimOutputTypeID = tmpType.Id
+			for i := 0; i < len(tmpType.Para); i++ {
+				tmpData.Data[tmpType.Para[i]], _ = strconv.ParseFloat(line[i], 32)
+			}
+			err := MySimDataModel.DB.Insert(&tmpData)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		//存下文件
+		fileContent, _ = file.Open()
+		gridFile, _ := MyGridFS.Create(file.Filename)
+		gridFile.SetId(output_id)
+		_, err := io.Copy(gridFile, fileContent)
+		err = gridFile.Close()
+		if err != nil {
+			panic(err)
+		}
+		fileContent.Close()
+
+		//存下Id和文件名
+		outputfilesName = append(outputfilesName, file.Filename)
+		outputfilesId = append(outputfilesId, output_id)
+	}
+
+	fmt.Printf("input files %v\n", inputfilesId)
+	fmt.Printf("output files %v\n", outputfilesId)
+
+	newCase := SimCase{Id: simcase_id,
+		User:        bson.ObjectIdHex(userId.(string)),
+		SimName:     simName,
+		SimTime:     time.Now(),
+		WConID:      bson.ObjectIdHex(simCon),
+		RModID:      bson.ObjectIdHex(simMod),
+		Inputs:      inputfilesId,
+		Outputs:     outputfilesId,
+		InputsName:  inputfilesName,
+		OutputsName: outputfilesName,
+	}
+
+	err := MySimCaseModel.DB.Insert(&newCase)
+	if err != nil {
+		panic(err)
+	}
+
+	c.JSON(http.StatusOK, &ApiResponse{
+		Code:    200,
+		Flag:    true,
+		Message: "Create new sim case and save data",
+		Data:    outputfilesId,
+	})
+}
+
+func GetSimList(c *gin.Context) {
+	userId, _ := c.Get("G_userId")
+
+	tmpSimCase := []SimCase_Full{}
+	MySimCaseModel.DB.Find(bson.M{"user": bson.ObjectIdHex(userId.(string))}).All(&tmpSimCase)
+
+	for i := 0; i < len(tmpSimCase); i++ {
+		tmpCon := WorkingCon{}
+		MyWConditionModel.DB.FindId(tmpSimCase[i].WConID).One(&tmpCon)
+		tmpSimCase[i].WConName = tmpCon.ConName
+
+		tmpMod := ReactorMod{}
+		MyReactorModel.DB.FindId(tmpSimCase[i].RModID).One(&tmpMod)
+		tmpSimCase[i].RModName = tmpMod.ModName
+	}
+
+	c.JSON(http.StatusOK, &ApiResponse{
+		Code:    200,
+		Flag:    true,
+		Message: "Get Sim List",
+		Data:    tmpSimCase,
+	})
+}
+
+func GetSimIdList(c *gin.Context) {
+	userId, _ := c.Get("G_userId")
+
+	tmpSimCase := []SimCase{}
+	MySimCaseModel.DB.Find(bson.M{"user": bson.ObjectIdHex(userId.(string))}).All(&tmpSimCase)
+
+	Ids := []string{}
+
+	for i := 0; i < len(tmpSimCase); i++ {
+		Ids = append(Ids, (tmpSimCase[i].Id.Hex()))
+	}
+
+	c.JSON(http.StatusOK, &ApiResponse{
+		Code:    200,
+		Flag:    true,
+		Message: "Get Sim Id List",
+		Data:    Ids,
 	})
 }

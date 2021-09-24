@@ -46,14 +46,16 @@ func Register(c *gin.Context) {
 
 //用户登陆
 func Login(c *gin.Context) {
-	session := sessions.Default(c)                                                                           //change
-	option := sessions.Options{MaxAge: 3600, Path: "/", Domain: "localhost", HttpOnly: false, Secure: false} //change
-	session.Options(option)                                                                                  //change
+	session := sessions.Default(c)                                                            //change
+	option := sessions.Options{MaxAge: 3600, Path: "/", Domain: "127.0.0.1", HttpOnly: false} //change
+	session.Options(option)                                                                   //change
 
 	//解析post的数据存到postUser内
 	con, _ := ioutil.ReadAll(c.Request.Body) //获取post的数据
 	postUser := User{}
 	json.Unmarshal(con, &postUser)
+	fmt.Printf("%v", "postUser.Username ")
+	fmt.Printf("%v", postUser.Username)
 
 	//检查用户名和密码是否匹配
 	tmpUser := User{}
@@ -69,7 +71,7 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusOK, &ApiResponse{
 			Code:    200,
 			Flag:    true,
-			Message: &ObjectID{Id: hexid},
+			Message: hexid,
 		})
 	} else {
 		c.JSON(http.StatusOK, &ApiResponse{
@@ -82,12 +84,25 @@ func Login(c *gin.Context) {
 
 func GetUserInfo(c *gin.Context) {
 	userId, _ := c.Get("G_userId")
+	fmt.Printf("%v", "userId: ")
+	fmt.Printf("%v", userId)
+	tmpUser := User{}
+	MyUserModel.DB.FindId(bson.ObjectIdHex(userId.(string))).One(&tmpUser)
+
+	tmpUser.Password = ""
+	fmt.Printf("%v", "tmpuser: ")
+	fmt.Printf("%v", tmpUser.Username)
+
 	c.JSON(http.StatusOK, &ApiResponse{
 		Code:    200,
 		Flag:    true,
-		Message: userId,
+		Message: "获取信息成功",
+		Data:    tmpUser,
 	})
 }
+
+// data = user_cl.find({"_id":ObjectId(userId)},{"_id": 1, "email": 1, "roles": 1})[0]
+//     return jsonify(code=RET.OK, flag=True, message='获取用户信息成功', data={"id":str(data["_id"]),"roles":data["roles"],"email":data["email"]})
 
 // // GetUserByID 根据ID查询用户
 // func GetUserByUid (c *gin.Context) {
